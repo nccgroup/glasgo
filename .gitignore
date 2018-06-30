@@ -2,3 +2,4 @@
 main
 ./Go-AST-Analysis-Tool
 Go-AST-Analysis-Tool
+*.swp

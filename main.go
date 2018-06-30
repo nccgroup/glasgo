@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"flag"
 	"go/ast"
+	"go/build"
 	"go/token"
 	"go/parser"
 	"strings"
 	"os"
+	"path/filepath"
 )
 
 // a global variable for the exit code.
@@ -114,6 +117,46 @@ func (f *File) Visit(node ast.Node) ast.Visitor {
 	return f;
 }
 
+// checkPackageDir extracts the go files from a directory and passes them to 
+// checkPackage for analysis
+func checkPackageDir(directory string) {
+	context := build.Default
+	// gets build tags if any exist in order to preserve them through the coming import
+	/*
+	these are commented out until proof is made of being necessary
+	if len(context.BuildTags) != 0 {
+		warnf("build tags already set: %s," context.BuildTags);
+	}
+	context.BuildTags = append(tagList, context.BuildTags...);
+	*/
+
+	pkg, err := context.ImportDir(directory, 0); // 0 means no ImportMode is set i.e. default
+	if err != nil {
+		// no go source files
+		if _, noGoSource := err.(*build.NoGoError); noGoSource {
+			return;
+		}
+		// not considered fatal because we are recursively walking directories
+		warnf("error processing directory %s, %s", directory, err);
+		return;
+	}
+	var names []string
+	names = append(names, pkg.GoFiles...);
+	names = append(names, pkg.CgoFiles...);
+	names = append(names, pkg.TestGoFiles...);
+	/* there are other types include binary files that can be added */
+	
+	/* prefix each file with the directory name
+	 * could use a refactor
+	*/
+	if directory != "." {
+		for i, name := range names{
+			names[i] = filepath.Join(directory, name);
+		}
+	}
+	checkPackage(names);
+}
+
 // checkPackage runs analysis on all named files in a package.
 // It parses and then runs the analysis.
 // It returns the parsed package or nil.
@@ -168,9 +211,55 @@ func checkPackage(names []string) {
 	}
 }
 
-func main() {
-	names := make([]string, 3);
-	names[0] = "testdata/printAST.go"
-
-	checkPackage(names);
+// visit is for walking input directory roots
+func visit(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		warnf("directory walk error: %s", err);
+		return err;
+	}
+	// make sure we are only dealing with directories here
+	if !info.IsDir() {
+		return nil
+	}
+	checkPackageDir(path);
+	return nil;
 }
+
+func main() {
+	var runOnDirs, runOnFiles bool;
+	flag.Parse();
+
+	for _, name := range flag.Args() {
+		// check to see if cl argument is a directory
+		f, err := os.Stat(name);
+		if err != nil {
+			warnf("error: %s", err);
+			continue;
+		}
+		if f.IsDir() {
+			runOnDirs = true;
+		} else {
+			runOnFiles = true;
+		}
+	}
+	if runOnDirs && runOnFiles {
+		// print an error
+		fmt.Println("error: input arguments must not be both directories and files");
+		exitCode = 1;
+		os.Exit(exitCode);
+	}
+	if runOnDirs {
+		// I want to do each directory in order
+		// so I am going to loop through these regardless
+		// root is a name of a directory, at the root, to be walked
+		for _, root := range flag.Args() {
+			filepath.Walk(root, visit);
+		}
+		os.Exit(exitCode);
+	}
+	// else they are just file names
+	fileNames := flag.Args();	
+	checkPackage(fileNames);
+	return;
+}
+
