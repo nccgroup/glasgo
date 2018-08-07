@@ -7,9 +7,19 @@ import (
 	"go/build"
 	"go/token"
 	"go/parser"
+	"go/printer"
+	"go/types"
+	"go/importer"
+	"bytes"
 	"strings"
 	"os"
 	"path/filepath"
+)
+
+var stdImporter types.Importer
+
+var (
+	source = flag.Bool("source", false, "import from source instead of compiled object files")
 )
 
 // a global variable for the exit code.
@@ -26,6 +36,7 @@ var (
 	callExpr	*ast.CallExpr
 	compositeLit	*ast.CompositeLit
 	exprStmt	*ast.ExprStmt
+	fileNode	*ast.File
 	forStmt		*ast.ForStmt
 	funcDecl	*ast.FuncDecl
 	funcLit		*ast.FuncLit
@@ -49,12 +60,35 @@ var (
 // A map 
 // File is a visitor type for the parse tree.
 // it also contains the corresponding AST to a parsed file
+// pkg contains data on the entire package that was parsed
+// this includes things like type info so you can spot
+// an expression, like a func call, and look up it's type
 type File struct {
+	pkg	*Package
 	fset	*token.FileSet
 	name	string
 	file	*ast.File
+
+	b	bytes.Buffer // used for logging and printing results
+
 	// a map of all registered checkers to run for each node
 	checkers map[ast.Node][]func(*File, ast.Node);
+}
+
+// Reportf reports issues to a log for each file for later printing
+func (f *File) Reportf(pos token.Pos, format string, args ...interface{}) {
+	// update this to use a logger
+	fmt.Fprintf(os.Stderr, "%v %s \n", f.loc(pos), fmt.Sprintf(format, args...));
+}
+
+// loc (line of code) returns a formatted string of file and a file position
+func (f *File) loc(pos token.Pos) string {
+	if pos == token.NoPos {
+		return ""
+	}
+	// we won't print column, just line
+	posn := f.fset.Position(pos)
+	return fmt.Sprintf("%s:%d", posn.Filename, posn.Line);
 }
 
 // warnf is a formatted error printer that does not exit
@@ -93,6 +127,8 @@ func (f *File) Visit(node ast.Node) ast.Visitor {
 		key = compositeLit
 	case *ast.ExprStmt:
 		key = exprStmt
+	case *ast.File:
+		key = fileNode
 	case *ast.ForStmt:
 		key = forStmt
 	case *ast.FuncDecl:
@@ -115,6 +151,38 @@ func (f *File) Visit(node ast.Node) ast.Visitor {
 		fn(f, node)
 	}
 	return f;
+}
+
+type Package struct {
+	path	string
+	types 	map[ast.Expr]types.TypeAndValue;
+	typePkg	*types.Package
+	info	*types.Info
+}
+
+func (pkg *Package) check(fs *token.FileSet, astFiles []*ast.File) error {
+	if stdImporter == nil {
+		if *source {
+			stdImporter = importer.For("source", nil)
+		} else {
+			stdImporter = importer.Default();
+		}
+	}
+	pkg.types = make(map[ast.Expr]types.TypeAndValue);
+
+	conf := types.Config{
+		Importer: stdImporter,
+	}
+
+	// Type-Check the package.
+	info := types.Info{
+		Types: pkg.types,
+	}
+	typePkg, err := conf.Check(pkg.path, fs, astFiles, &info);
+	pkg.typePkg = typePkg
+	pkg.info = &info;
+	return err;
+	
 }
 
 // checkPackageDir extracts the go files from a directory and passes them to 
@@ -188,8 +256,22 @@ func checkPackage(names []string) {
 	if len(astFiles) == 0 {
 		return;
 	}
+	pkg := new(Package);
+	
+	// Type check package and
+	// generate information about it
+	err = pkg.check(fset, astFiles);
+	if err != nil {
+		// probably should just keep going
+		fmt.Printf("exited, %v", err);
+		os.Exit(0);
+	}
 
 	// Check.
+	for _, file := range files {
+		file.pkg = pkg;
+	}
+
 	chk := make(map[ast.Node][]func(*File, ast.Node));
 	for typ, set := range checkers {
 		for name, fn := range set {
@@ -223,6 +305,54 @@ func visit(path string, info os.FileInfo, err error) error {
 	}
 	checkPackageDir(path);
 	return nil;
+}
+
+// ASTString returns a string representation of the AST for reporting
+func (f *File) ASTString(x ast.Expr) string {
+	var b bytes.Buffer
+	printer.Fprint(&b, f.fset, x);
+	return b.String()
+}
+
+// getFuncName returns just function name i.e. not ioutil.ReadAll but just ReadAll
+// not returning errors,
+func getFuncName(node ast.Node) string {
+	if call, ok := node.(*ast.CallExpr); ok {
+		if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
+			if(fun.Sel.Name != "") {
+				return fun.Sel.Name;
+			}
+		}
+		if fun, ok := call.Fun.(*ast.Ident); ok {
+			if(fun.Name != "") {
+				return fun.Name;
+			}
+		}
+	} 
+	return ""
+}
+
+// getFullFuncName extracts a full function name path i.e ioutil.ReadAll
+func getFullFuncName(node ast.Node) (string, error) {
+	var names []string
+	var callName string
+	if call, ok := node.(*ast.CallExpr); ok {
+		if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
+			fmt.Println(fun.X);
+			// SelectorExpr has two fields
+			// X and Sel
+                        // X (through reflection) was found to be an Ident
+                        // Sel has field Name
+                        // Ident's have a field Name also.
+			if id, ok := (fun.X).(*ast.Ident); ok {
+				names = append(names, id.Name);
+				names = append(names, fun.Sel.Name);
+				callName = strings.Join(names, "/")
+				return callName, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("type conversion of CallExpr failed, no name extracted, %v", node);
 }
 
 func main() {

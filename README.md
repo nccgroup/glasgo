@@ -9,6 +9,10 @@ security implication.
 
 tbd
 
+## Tests
+
+* `error` - errors ignored
+
 ## Design Choices
 
 see the wiki

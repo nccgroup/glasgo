@@ -5,7 +5,7 @@ package main
 
 import (
 	"go/ast"
-	"fmt"
+	//"fmt"
 )
 
 func init() {
@@ -16,6 +16,6 @@ func init() {
 }
 
 func squibCheck(f *File, node ast.Node) {
-	fmt.Println(node);
+	//fmt.Println(node);
 	return;
 }
