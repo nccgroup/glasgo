@@ -338,7 +338,8 @@ func getFullFuncName(node ast.Node) (string, error) {
 	var callName string
 	if call, ok := node.(*ast.CallExpr); ok {
 		if fun, ok := call.Fun.(*ast.SelectorExpr); ok {
-			fmt.Println(fun.X);
+			// fmt.Println(fun.X);
+			// I think the above can be removed
 			// SelectorExpr has two fields
 			// X and Sel
                         // X (through reflection) was found to be an Ident

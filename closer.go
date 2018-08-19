@@ -37,7 +37,13 @@ func closesFile(f *File, stmts []ast.Stmt) bool {
 				}
 			}
 		case *ast.ExprStmt:
-
+			name, err := getFullFuncName(expr.X);
+			if err != nil {
+				warnf("issue, %v", err);
+			}
+			if(name == "file/Close") {
+				return true
+			}
 		}
 	}
 	return false

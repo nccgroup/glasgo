@@ -44,7 +44,8 @@ func intToStrCheck(f *File, node ast.Node) {
 						f.Reportf(stmt.Pos(), formatString, str);
 					}
 				default:
-					fmt.Println("nope");
+					// code 1000
+					fmt.Println("error condition, please report code 1000 to maintainer");
 				}
 			}
 		}
