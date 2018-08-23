@@ -5,3 +5,8 @@ Go-AST-Analysis-Tool
 *.swp
 todo
 done
+squib.go
+
+# random junk
+.DS_Store
+printAST.txt
