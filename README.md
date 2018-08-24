@@ -35,6 +35,12 @@ tbd
 ## Tests
 
 * `error` - errors ignored
+* `closer` - no file.Close() method called in function with file.Open()
+* `insecureCrypto` - insecure cryptographic primitives
+* `insecureRand` - insecurely generated random numbers
+* `intToStr` - string method called on integer
+* `readAll` - ioutil.ReadAll called
+* `textTemp` - checks if HTTP methods and template/text are in use
 
 ## Design Choices
 
