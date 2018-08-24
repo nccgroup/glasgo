@@ -78,7 +78,7 @@ type File struct {
 // Reportf reports issues to a log for each file for later printing
 func (f *File) Reportf(pos token.Pos, format string, args ...interface{}) {
 	// update this to use a logger
-	fmt.Fprintf(os.Stderr, "%v %s \n", f.loc(pos), fmt.Sprintf(format, args...));
+	fmt.Fprintf(os.Stderr, "\t* %v %s \n", f.loc(pos), fmt.Sprintf(format, args...));
 }
 
 // loc (line of code) returns a formatted string of file and a file position
