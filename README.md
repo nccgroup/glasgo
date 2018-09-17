@@ -38,7 +38,7 @@ tbd
 * `closer` - no file.Close() method called in function with file.Open()
 * `insecureCrypto` - insecure cryptographic primitives
 * `insecureRand` - insecurely generated random numbers
-* `intToStr` - string method called on integer
+* `intToStr` - integer to string conversion without calling strconv
 * `readAll` - ioutil.ReadAll called
 * `textTemp` - checks if HTTP methods and template/text are in use
 
