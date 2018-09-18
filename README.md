@@ -1,4 +1,4 @@
-# Go Static Analysis Tool
+# Glasgo Static Analysis Tool
 
 ## Project
 
@@ -17,13 +17,13 @@ To compile the tool, be sure to have the Go compiler first.
 For now, all tests are run.
 
 ~~~
-Go-Tool directory1, directory2
+Glasgo directory1, directory2
 ~~~
 
 or
 
 ~~~
-Go-Tool file1.go, file2.go
+Glasgo file1.go, file2.go
 ~~~
 
 `Note:` The tool does not run on both directories and individual files
