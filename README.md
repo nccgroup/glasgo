@@ -1,6 +1,6 @@
 # Glasgo Static Analysis Tool
 
-This project's official repository is [here](https://github.com/ttarvis/glasgo)
+This project's official repository has been moved to [Github-ttarvis/glasgo.](https://github.com/ttarvis/glasgo)
 
 ## Project
 
