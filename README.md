@@ -1,5 +1,7 @@
 # Glasgo Static Analysis Tool
 
+This project's official repository is [here](https://github.com/ttarvis/glasgo)
+
 ## Project
 
 This is a static analysis tool written in Go for Go code.  It will find security and some correctness issues that may have a 
