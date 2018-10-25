@@ -1,0 +1,7 @@
+check http default timeout (it's not clear if this is still an issue)
+check strings for SQL injection (go sec's test is dumb)
+interface downgrades?
+default timeout on http clients?
+opening files in a loop
+rewrite some of the tests for packages to go find any functions actually called from the library
+check for keys or passwords in source
