@@ -2,6 +2,8 @@
 main
 ./Go-AST-Analysis-Tool
 Go-AST-Analysis-Tool
+./Glasgo
+Glasgo
 *.swp
 todo
 done

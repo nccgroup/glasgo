@@ -1,5 +1,5 @@
 // Copyright 2018 Terence Tarvis.  All rights reserved.
-// add a license
+//  
 
 package main
 

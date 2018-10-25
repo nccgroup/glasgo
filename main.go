@@ -172,12 +172,17 @@ func (pkg *Package) check(fs *token.FileSet, astFiles []*ast.File) error {
 
 	conf := types.Config{
 		Importer: stdImporter,
+		Error: func(err error) { 
+				// todo refactor this
+				fmt.Printf("\tWarning: during type checking, %v\n", err)
+			},
 	}
 
-	// Type-Check the package.
 	info := types.Info{
 		Types: pkg.types,
 	}
+
+	// Type-Check the package.
 	typePkg, err := conf.Check(pkg.path, fs, astFiles, &info);
 	pkg.typePkg = typePkg
 	pkg.info = &info;
@@ -263,8 +268,9 @@ func checkPackage(names []string) {
 	err = pkg.check(fset, astFiles);
 	if err != nil {
 		// probably should just keep going
-		fmt.Printf("exited, %v", err);
-		os.Exit(0);
+		// fmt.Printf("exited, %v", err);
+		//os.Exit(0);
+		// errors being caught in different location.
 	}
 
 	// Check.

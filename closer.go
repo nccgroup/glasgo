@@ -1,5 +1,4 @@
 // Copyright 2018 Terence Tarvis.  All rights reserved.
-// add a license
 
 package main
 
@@ -15,8 +14,21 @@ func init() {
 }
 
 func opensFile(f *File, x ast.Expr) bool {
+	/*
+	if(f.pkg.info.TypeOf(x) == nil) {
+		// should probably print something out here to notify the user
+		return false;
+	}
+	*/
+	/*
 	if(f.pkg.info.TypeOf(x).String() == "(*os.File, error)") {
 		return true
+	}
+	*/
+	if typeValue := f.pkg.info.TypeOf(x); typeValue != nil {
+		if typeValue.String() == "(*os.File, error)" {
+			return true;
+		}
 	}
 	return false;
 }

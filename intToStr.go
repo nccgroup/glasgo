@@ -1,5 +1,5 @@
 // Copyright 2018 Terence Tarvis.  All rights reserved.
-// add a license
+//  
 
 package main
 
@@ -26,11 +26,12 @@ func intToStrCheck(f *File, node ast.Node) {
 			if(len(stmt.Args) == 1) {
 				switch arg := stmt.Args[0].(type) {
 				case *ast.Ident:
-					t := f.pkg.info.TypeOf(arg);
-					// is this really the best way to check?
-					if(t.String() == "int") {
-						str := f.ASTString(stmt);
-						f.Reportf(stmt.Pos(), formatString, str);
+					if t := f.pkg.info.TypeOf(arg); t != nil {
+						// is this really the best way to check?
+						if(t.String() == "int") {
+							str := f.ASTString(stmt);
+							f.Reportf(stmt.Pos(), formatString, str);
+						}
 					}
 				case *ast.BasicLit:
 					if(arg.Kind == token.INT) {
@@ -38,10 +39,11 @@ func intToStrCheck(f *File, node ast.Node) {
 						f.Reportf(stmt.Pos(), formatString, str);
 					}
 				case *ast.CallExpr:
-					t := f.pkg.info.TypeOf(arg);
-					if(t.String() == "int") {
-						str := f.ASTString(stmt);
-						f.Reportf(stmt.Pos(), formatString, str);
+					if t := f.pkg.info.TypeOf(arg); t != nil {
+						if(t.String() == "int") {
+							str := f.ASTString(stmt);
+							f.Reportf(stmt.Pos(), formatString, str);
+						}
 					}
 				default:
 					// code 1000
